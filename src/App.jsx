@@ -5,9 +5,11 @@ import FoodList from './components/FoodList';
 function App() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = async (query) => {
     setLoading(true);
+    setHasSearched(true);
 
     try {
       const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&json=1&page_size=10`;
@@ -15,7 +17,6 @@ function App() {
       const response = await fetch(url);
       const data = await response.json();
 
-      // ✅ Filter valid products
       const filtered = data.products.filter(
         (p) => p.product_name && p.product_name.trim() !== ''
       );
@@ -23,7 +24,8 @@ function App() {
       setResults(filtered);
 
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error fetching data:", error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -35,13 +37,23 @@ function App() {
 
       <SearchBar onSearch={handleSearch} />
 
+      {/* Loading State */}
       {loading && <p>Loading...</p>}
 
-      {!loading && results.length === 0 && (
+      {/* Initial State */}
+      {!loading && !hasSearched && (
         <p>Search for a food above to see its nutrition info.</p>
       )}
 
-      <FoodList products={results} />
+      {/* No Results */}
+      {!loading && hasSearched && results.length === 0 && (
+        <p>No results found.</p>
+      )}
+
+      {/* Results */}
+      {results.length > 0 && (
+        <FoodList products={results} />
+      )}
     </div>
   );
 }
